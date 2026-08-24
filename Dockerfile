@@ -37,7 +37,7 @@ EXPOSE 10000
 # No curl/wget in slim; use Python's stdlib to probe the app. Hitting "/"
 # also re-warms the Dash resource registry if a worker was recycled.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/', timeout=4)"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"10000\")}/', timeout=4)"
 
 # Shell form so ${PORT} expands at runtime (Render injects it; DB_* come
 # from the Render environment, e.g. a Neon pooler host). DB settings are not
