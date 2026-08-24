@@ -29,14 +29,17 @@ COPY src ./src
 # app.py imports `db_config` as a sibling module, so the serving cwd is src/.
 WORKDIR /app/src
 
+# Render routes traffic to $PORT (default 10000); compose falls back to 8000.
+ENV PORT=8000
+
 EXPOSE 8000
 
 # No curl/wget in slim; use Python's stdlib to probe the app. Hitting "/"
 # also re-warms the Dash resource registry if a worker was recycled.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=4)"]
+    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/', timeout=4)"
 
-ENV DB_HOST=db \
-    DB_PORT=5432
-
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "--timeout", "120", "--access-logfile", "-", "app:server"]
+# Shell form so ${PORT} expands at runtime (Render injects it; DB_* come
+# from the Render environment, e.g. a Neon pooler host). DB settings are not
+# baked into the image — missing vars fail loudly at import in db_config.py.
+CMD ["sh", "-c", "gunicorn --config gunicorn.conf.py --bind 0.0.0.0:${PORT} --workers 2 --threads 4 --timeout 120 --access-logfile - app:server"]
