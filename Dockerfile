@@ -30,9 +30,9 @@ COPY src ./src
 WORKDIR /app/src
 
 # Render routes traffic to $PORT (default 10000); compose falls back to 8000.
-ENV PORT=8000
+ENV PORT=10000
 
-EXPOSE 8000
+EXPOSE 10000
 
 # No curl/wget in slim; use Python's stdlib to probe the app. Hitting "/"
 # also re-warms the Dash resource registry if a worker was recycled.
@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 # Shell form so ${PORT} expands at runtime (Render injects it; DB_* come
 # from the Render environment, e.g. a Neon pooler host). DB settings are not
 # baked into the image — missing vars fail loudly at import in db_config.py.
-CMD ["sh", "-c", "gunicorn --config gunicorn.conf.py --bind 0.0.0.0:${PORT} --workers 2 --threads 4 --timeout 120 --access-logfile - app:server"]
+CMD ["sh", "-c", "gunicorn --config gunicorn.conf.py --bind 0.0.0.0:${PORT} --workers 1 --threads 4 --timeout 120 --access-logfile - app:server"]
