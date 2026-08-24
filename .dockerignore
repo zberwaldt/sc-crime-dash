@@ -1,0 +1,39 @@
+# Git / VCS
+.git
+.gitignore
+
+# Agent tooling artifacts (Neon skills, local state)
+.agents/
+.neon
+skills-lock.json
+
+# Local virtualenvs & env files (never ship secrets into the image)
+.venv
+.env
+.env.*
+!.env.example
+
+# Large/unneeded local data & outputs (loaded from the DB at runtime)
+data/
+output/
+*.zip
+*.csv
+
+# Notebooks & scratch (the web app only needs src/app.py)
+.ipynb_checkpoints
+.virtual_documents
+src/*.ipynb
+src/*.ipynb.invalid
+src/monte.ipynb
+src/main.py
+src/dash_app.py
+src/dash_app_two.py
+src/dash_fundamentals.py
+src/untitled.chat
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

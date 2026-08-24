@@ -1,0 +1,23 @@
+# Docker Compose for the SC Crime Explorer Dash app.
+#
+# Spins up the web app (gunicorn) plus a PostGIS database so the deployment is
+# fully self-contained and portable to any cloud provider (Docker app on
+# DigitalOcean/Heroku, AWS/Azure/GCP container runtimes, etc.).
+#
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Everything configurable at runtime; matches src/db_config.py keys.
+      DB_USER: ${DB_USER:?Set DB_USER in .env or environment}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env or environment}
+      DB_HOST: ${DB_HOST:?Set DB_HOST in .env or environment}
+      DB_PORT: ${DB_PORT:?Set DB_PORT in .env or environment}
+      DB_NAME: ${DB_NAME:?Set DB_NAME in .env or environment}
+      # Local postgis container serves plain Postgres; no TLS.
+      # Remove this when pointing at Neon/managed prod (which needs sslmode=require).
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+    ports:
+      - "${WEB_PORT:-8000}:8000"
