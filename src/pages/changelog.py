@@ -9,21 +9,21 @@ dash.register_page(__name__,
 # Date of change + description
 CHANGELOG = [
     {
-        "date": "2026-08-20",
-        "description": "Added README file describing the project setup and usage.",
+        "date": "2026-08-25 2:15pm",
+        "description": "Switch to multi-page app, add changelog, favicon, and page title"
     },
     {
-        "date": "2026-08-18",
-        "description": "Added CSV export routes and export buttons for charts.",
+        "date": "2026-08-25 11:00am",
+        "description": "Update favicon and html title"
     },
     {
-        "date": "2026-08-15",
-        "description": "Fixed container healthcheck and reduced gunicorn workers.",
+        "date": "2026-08-25 8:30am",
+        "description": "Add export data buttons to charts on home page"
     },
     {
-        "date": "2026-08-12",
-        "description": "Fixed Dockerfile build issues and restructured the project.",
-    },
+        "date": "2026-08-24 3:00pm",
+        "description": "Launch South Carolina Crime Explorer"
+    }
 ]
 
 
