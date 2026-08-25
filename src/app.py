@@ -1,6 +1,7 @@
 import logging
 import traceback
 
+import dash
 from dash import Dash, html, dcc, Input, Output, callback, no_update
 from sqlalchemy import create_engine, text
 from flask import request as flask_request, Response
@@ -48,7 +49,7 @@ external_stylesheets = [
     'https://codepen.io/chriddyp/pen/brPBPO.css'
 ]
 
-app = Dash(name="Monte Carlo", external_stylesheets=external_stylesheets)
+app = Dash(name="SC Crime Dashboard", external_stylesheets=external_stylesheets, use_pages=True)
 
 app.title = "SC Crime Dashboard"
 
@@ -287,6 +288,16 @@ app.layout = html.Div(
             ],
         ),
         dcc.Store(id="county-geo"),
+        html.Footer(
+            children=[
+                html.Div([
+                    html.Div(
+                        dcc.Link(f"{page['name']}", href=page['relative_path'])
+                    ) for page in dash.page_registry.values()
+                ])
+            ]
+        ),
+        dash.page_container
     ],
 )
 
