@@ -3,7 +3,7 @@ import traceback
 
 from dash import Dash, html, dcc, Input, Output, callback, no_update
 from sqlalchemy import create_engine, text
-from flask import request as flask_request
+from flask import request as flask_request, Response
 from flask_caching import Cache
 from werkzeug.exceptions import HTTPException
 import plotly.express as px
@@ -254,11 +254,29 @@ app.layout = html.Div(
                     children=[
                         html.Div(
                             className="chart",
-                            children=dcc.Graph(id="crime-types-fig"),
+                            children=[
+                                dcc.Graph(id="crime-types-fig"),
+                                html.A(
+                                    "Export CSV",
+                                    id="export-offenses-link",
+                                    href="#",
+                                    className="button",
+                                    style={"display": "block", "margin-top": "10px"},
+                                ),
+                            ],
                         ),
                         html.Div(
                             className="chart",
-                            children=dcc.Graph(id="crime-locations-fig"),
+                            children=[
+                                dcc.Graph(id="crime-locations-fig"),
+                                html.A(
+                                    "Export CSV",
+                                    id="export-locations-link",
+                                    href="#",
+                                    className="button",
+                                    style={"display": "block", "margin-top": "10px"},
+                                ),
+                            ],
                         ),
                     ],
                 ),
@@ -331,6 +349,8 @@ def show_map(value):
     Output('crime-types-fig', 'figure'),
     Output('crime-locations-fig', 'figure'),
     Output('selected-county', 'children'),
+    Output('export-offenses-link', 'href'),
+    Output('export-locations-link', 'href'),
     Input('county-map', 'clickData')
 )
 def show_county_details(clickData):
@@ -338,6 +358,9 @@ def show_county_details(clickData):
         county = clickData["points"][0]["location"]
     else:
         county = DEFAULT_COUNTY
+
+    export_offenses = f"/export/{county}/offenses"
+    export_locations = f"/export/{county}/locations"
 
     try:
         types_fig, locations_fig = county_detail_figures(county)
@@ -348,11 +371,32 @@ def show_county_details(clickData):
             error_figure(f"Could not load crime types — {message}"),
             error_figure(f"Could not load crime locations — {message}"),
             f"Selected county: {county} (error loading data)",
+            export_offenses,
+            export_locations,
         )
 
-    return types_fig, locations_fig, f"Selected county: {county}"
+    return types_fig, locations_fig, f"Selected county: {county}", export_offenses, export_locations
 
-server = app.server
+@app.server.route("/export/<county>/<data_type>")
+def export_data(county, data_type):
+    """CSV export endpoint for a given county's data."""
+    try:
+        if data_type == "offenses":
+            df = fetch_top_offenses(county)
+        elif data_type == "locations":
+            df = fetch_top_locations(county)
+        else:
+            return "Invalid data type", 400
+        
+        csv = df.to_csv(index=False)
+        return Response(
+            csv,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename={county}_{data_type}.csv"}
+        )
+    except Exception as exc:
+        logger.exception("Failed to export data for %s/%s", county, data_type)
+        return str(exc), 500
 
 
 def _is_api_request():
@@ -374,7 +418,7 @@ def _error_payload(code, message, detail=None):
     return payload
 
 
-@server.errorhandler(HTTPException)
+@app.server.errorhandler(HTTPException)
 def handle_http_exception(exc):
     """Return meaningful messages for 404/405/etc. instead of bare HTML."""
     if _is_api_request():
@@ -389,7 +433,7 @@ def handle_http_exception(exc):
     )
 
 
-@server.errorhandler(Exception)
+@app.server.errorhandler(Exception)
 def handle_unexpected_exception(exc):
     """Log the full traceback and surface a useful message to the client."""
     logger.exception("Unhandled exception while serving %s", flask_request.path)
