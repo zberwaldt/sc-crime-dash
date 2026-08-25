@@ -50,6 +50,8 @@ external_stylesheets = [
 
 app = Dash(name="Monte Carlo", external_stylesheets=external_stylesheets)
 
+app.title = "SC Crime Dashboard"
+
 server = app.server
 
 app.index_string = """
