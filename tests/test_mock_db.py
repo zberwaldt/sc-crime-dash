@@ -8,6 +8,8 @@ import pandas as pd
 import pytest
 
 from src import app as app_module
+from src import crime_data as cd
+from src.pages import home
 
 
 @pytest.fixture
@@ -45,7 +47,7 @@ def test_fetch_top_locations_runs_real_sql(clear_cache, mock_db):
 
 
 def test_fetch_county_geo_reads_wkb_geometry(clear_cache, mock_db):
-    gdf = app_module.fetch_county_geo(engine=mock_db)
+    gdf = cd.fetch_county_geo(engine=mock_db)
 
     assert len(gdf) == 3
     assert set(gdf["county_name"]) == {"York", "Greenville", "Charleston"}
@@ -56,13 +58,13 @@ def test_fetch_county_geo_reads_wkb_geometry(clear_cache, mock_db):
 
 
 def test_unknown_county_returns_empty(clear_cache, mock_db):
-    df = app_module.fetch_top_offenses("NotACounty", engine=mock_db)
+    df = cd.fetch_top_offenses("NotACounty", engine=mock_db)
     assert isinstance(df, pd.DataFrame)
     assert df.empty
 
 
 def test_county_detail_figures_with_mock_db(clear_cache, mock_db):
-    types_fig, locations_fig = app_module.county_detail_figures(
+    types_fig, locations_fig = home.county_detail_figures(
         "York", engine=mock_db
     )
     assert "Top Crime Types - York" in types_fig.layout.title.text
