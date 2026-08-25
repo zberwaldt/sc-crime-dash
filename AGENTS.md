@@ -17,7 +17,7 @@ Data analysis + Dash visualization project exploring 2024 South Carolina crime d
 
 ## Database prerequisite (external, not in repo)
 `src/db_config.py` loads DB settings from a root `.env` (gitignored; commit `.env.example`, don't commit `.env`).
-- Postgres must be running externally on port **5433** with database `sc_crimes`. No docker-compose or DB setup exists in the repo.
+- Postgres must be running externally on port **5432** with database `sc_crimes`. No docker-compose or DB setup exists in the repo.
 - Tables used by `app.py` are created from notebook cells via `to_postgis(..., if_exists='replace')`; re-run those cells to (re)create schema. No migrations/ORM schemas exist. Current geography/crime tables: `sc_counties` (46 counties, `county_name`+`geometry`+pop), `sc_county_law_info` (county-by-agency fips crosswalk), `target_data` (per-incident `offense_type`/`location`/`fips`). `sc_crimes_by_county` is an aspirational table (notebook cell 43) that does **not** exist yet — don't query it from `app.py`.
 - DB settings live only in `src/db_config.py` + `.env`; the notebook and `app.py` both import `DB_URL` from `db_config`.
 

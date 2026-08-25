@@ -50,6 +50,8 @@ external_stylesheets = [
 
 app = Dash(name="Monte Carlo", external_stylesheets=external_stylesheets)
 
+server = app.server
+
 app.index_string = """
 <!DOCTYPE html>
 <html>
@@ -118,7 +120,7 @@ app.index_string = """
 </html>
 """
 
-cache = Cache(app.server, config={'CACHE_TYPE': 'flask_caching.backends.SimpleCache'})
+cache = Cache(server, config={'CACHE_TYPE': 'flask_caching.backends.SimpleCache'})
 
 @cache.memoize(timeout=300)
 def fetch_county_geo(engine=None):
@@ -377,7 +379,7 @@ def show_county_details(clickData):
 
     return types_fig, locations_fig, f"Selected county: {county}", export_offenses, export_locations
 
-@app.server.route("/export/<county>/<data_type>")
+@server.route("/export/<county>/<data_type>")
 def export_data(county, data_type):
     """CSV export endpoint for a given county's data."""
     try:
@@ -418,7 +420,7 @@ def _error_payload(code, message, detail=None):
     return payload
 
 
-@app.server.errorhandler(HTTPException)
+@server.errorhandler(HTTPException)
 def handle_http_exception(exc):
     """Return meaningful messages for 404/405/etc. instead of bare HTML."""
     if _is_api_request():
@@ -433,7 +435,7 @@ def handle_http_exception(exc):
     )
 
 
-@app.server.errorhandler(Exception)
+@server.errorhandler(Exception)
 def handle_unexpected_exception(exc):
     """Log the full traceback and surface a useful message to the client."""
     logger.exception("Unhandled exception while serving %s", flask_request.path)
