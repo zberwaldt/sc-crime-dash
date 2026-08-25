@@ -4,8 +4,10 @@ import pytest
 from sqlalchemy import text
 
 from src import app as app_module
+from src import crime_data as cd
 import src.queries as q
-from src.app import DEFAULT_COUNTY, show_map, load_county_geo
+from src.pages.home import show_map, load_county_geo, county_detail_figures
+from src.crime_data import DEFAULT_COUNTY
 
 
 @pytest.fixture
@@ -58,11 +60,11 @@ def fake_engine():
 # ---------------------------------------------------------------------------
 
 def test_get_engine_defaults_to_module_engine():
-    assert app_module.get_engine(None) is app_module.engine
+    assert cd.get_engine(None) is cd.engine
 
 
 def test_get_engine_returns_injected_engine(fake_engine):
-    assert app_module.get_engine(fake_engine) is fake_engine
+    assert cd.get_engine(fake_engine) is fake_engine
 
 
 def test_fetch_top_offenses_uses_injected_engine(clear_cache, fake_engine, monkeypatch):
@@ -75,9 +77,9 @@ def test_fetch_top_offenses_uses_injected_engine(clear_cache, fake_engine, monke
         requested["params"] = params
         return fake_df
 
-    monkeypatch.setattr(app_module.pd, "read_sql", fake_read_sql)
+    monkeypatch.setattr(cd.pd, "read_sql", fake_read_sql)
 
-    result = app_module.fetch_top_offenses("York", engine=fake_engine)
+    result = cd.fetch_top_offenses("York", engine=fake_engine)
 
     # The injected engine's connection was used (not the live global engine).
     assert isinstance(requested["con"], FakeConnection)
@@ -99,9 +101,9 @@ def test_fetch_top_locations_uses_injected_engine(clear_cache, fake_engine, monk
         requested["params"] = params
         return fake_df
 
-    monkeypatch.setattr(app_module.pd, "read_sql", fake_read_sql)
+    monkeypatch.setattr(cd.pd, "read_sql", fake_read_sql)
 
-    result = app_module.fetch_top_locations("Greenville", engine=fake_engine)
+    result = cd.fetch_top_locations("Greenville", engine=fake_engine)
 
     assert isinstance(requested["con"], FakeConnection)
     assert requested["params"]["county"] == "Greenville"
@@ -110,7 +112,7 @@ def test_fetch_top_locations_uses_injected_engine(clear_cache, fake_engine, monk
 
 
 def test_fetch_county_geo_uses_injected_engine(clear_cache, fake_engine, monkeypatch):
-    fake_gdf = app_module.gpd.GeoDataFrame(
+    fake_gdf = cd.gpd.GeoDataFrame(
         [{"county_name": "York", "geometry": None, "pop": 100}]
     )
     requested = {}
@@ -120,13 +122,13 @@ def test_fetch_county_geo_uses_injected_engine(clear_cache, fake_engine, monkeyp
         requested["geom_col"] = geom_col
         return fake_gdf
 
-    monkeypatch.setattr(app_module.gpd, "read_postgis", fake_read_postgis)
+    monkeypatch.setattr(cd.gpd, "read_postgis", fake_read_postgis)
 
-    result = app_module.fetch_county_geo(engine=fake_engine)
+    result = cd.fetch_county_geo(engine=fake_engine)
 
     assert isinstance(requested["con"], FakeConnection)
     assert requested["geom_col"] == "geometry"
-    assert isinstance(result, app_module.gpd.GeoDataFrame)
+    assert isinstance(result, cd.gpd.GeoDataFrame)
 
 
 # ---------------------------------------------------------------------------
@@ -138,9 +140,9 @@ def test_fetch_top_offenses_is_pure_data_access(clear_cache, fake_engine, monkey
     fake_df = pd.DataFrame(
         [{"category": "Assault", "incidents": 4}, {"category": "Larceny", "incidents": 7}]
     )
-    monkeypatch.setattr(app_module.pd, "read_sql", lambda *a, **k: fake_df)
+    monkeypatch.setattr(cd.pd, "read_sql", lambda *a, **k: fake_df)
 
-    result = app_module.fetch_top_offenses("York", engine=fake_engine)
+    result = cd.fetch_top_offenses("York", engine=fake_engine)
 
     assert isinstance(result, pd.DataFrame)
     assert list(result.columns) == ["category", "incidents"]
@@ -148,9 +150,9 @@ def test_fetch_top_offenses_is_pure_data_access(clear_cache, fake_engine, monkey
 
 def test_fetch_top_locations_is_pure_data_access(clear_cache, fake_engine, monkeypatch):
     fake_df = pd.DataFrame([{"category": "Store", "incidents": 9}])
-    monkeypatch.setattr(app_module.pd, "read_sql", lambda *a, **k: fake_df)
+    monkeypatch.setattr(cd.pd, "read_sql", lambda *a, **k: fake_df)
 
-    result = app_module.fetch_top_locations("York", engine=fake_engine)
+    result = cd.fetch_top_locations("York", engine=fake_engine)
 
     assert isinstance(result, pd.DataFrame)
     assert list(result.columns) == ["category", "incidents"]
@@ -168,9 +170,9 @@ def test_county_detail_figures_is_testable_without_server(clear_cache, fake_engi
     def fake_read_sql(sql, con, params):
         return offenses if "offense_type" in str(sql) else locations
 
-    monkeypatch.setattr(app_module.pd, "read_sql", fake_read_sql)
+    monkeypatch.setattr(cd.pd, "read_sql", fake_read_sql)
 
-    types_fig, locations_fig = app_module.county_detail_figures("York", engine=fake_engine)
+    types_fig, locations_fig = county_detail_figures("York", engine=fake_engine)
 
     assert isinstance(types_fig, go.Figure)
     assert isinstance(locations_fig, go.Figure)
@@ -195,10 +197,10 @@ def test_show_map():
 
 
 def test_load_county_geo_picks_injected_engine(clear_cache, fake_engine, monkeypatch):
-    fake_gdf = app_module.gpd.GeoDataFrame(
+    fake_gdf = cd.gpd.GeoDataFrame(
         [{"county_name": "York", "geometry": None, "pop": 100}]
     )
-    monkeypatch.setattr(app_module.gpd, "read_postgis", lambda *a, **k: fake_gdf)
+    monkeypatch.setattr(cd.gpd, "read_postgis", lambda *a, **k: fake_gdf)
 
     output = load_county_geo(None, engine=fake_engine)
 

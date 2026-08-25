@@ -20,4 +20,4 @@ services:
       # Remove this when pointing at Neon/managed prod (which needs sslmode=require).
       DB_SSLMODE: ${DB_SSLMODE:-require}
     ports:
-      - "${WEB_PORT:-8000}:8000"
+      - "${WEB_PORT:-10000}:10000"
